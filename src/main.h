@@ -85,6 +85,9 @@ extern const color_t COLOR_YELLOW;
 extern const color_t COLOR_BLACK;
 extern const color_t COLOR_LIGHT_GREY;
 extern const color_t COLOR_DARK_GREY;
-extern const color_t COLOR_COIN;
+extern const color_t COLOR_COIN1;
+extern const color_t COLOR_COIN2;
+extern const color_t COLOR_COIN3;
+extern const color_t COLOR_COIN4;
 
 #endif

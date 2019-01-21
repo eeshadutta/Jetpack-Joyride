@@ -5,6 +5,7 @@
 #include "platform.h"
 #include "wall.h"
 #include "coin.h"
+#include "enemy1.h"
 
 using namespace std;
 
@@ -17,6 +18,7 @@ Platform platform;
 Platform ceiling;
 Wall wall[50];
 vector<Coin> coins;
+vector<Enemy1> enemies1;
 
 float screen_zoom = 0.25, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
@@ -39,8 +41,18 @@ void draw()
     ceiling.draw(VP);
     for (int i = 0; i < 50; i++)
         wall[i].draw(VP);
-    if (coins[0].exist == true)
-        coins[0].draw(VP);
+
+    int len = coins.size();
+    for (int i = 0; i < len; i++)
+    {
+        if (coins[i].exist == true)
+            coins[i].draw(VP);
+    }
+    len = enemies1.size();
+    for (int i = 0; i < len; i++)
+    {
+        enemies1[i].draw(VP);
+    }
     player.draw(VP);
 }
 
@@ -55,25 +67,25 @@ void tick_input(GLFWwindow *window)
     {
         if (player.position.x > player_original_x)
         {
-            speed_horizontal = -0.1;
+            speed_horizontal = -0.4;
             player.tick(speed_horizontal, 0);
             speed_horizontal = 0;
         }
         if (player.position.x < camera_center.x - 7 && player.position.x > player_original_x)
         {
-            camera_pos -= glm::vec3(0.1, 0, 0);
-            camera_center -= glm::vec3(0.1, 0, 0);
+            camera_pos -= glm::vec3(0.4, 0, 0);
+            camera_center -= glm::vec3(0.4, 0, 0);
         }
     }
     if (right)
     {
-        speed_horizontal = 0.1;
+        speed_horizontal = 0.4;
         player.tick(speed_horizontal, 0);
         speed_horizontal = 0;
         if (player.position.x > camera_center.x + 7)
         {
-            camera_pos += glm::vec3(0.1, 0, 0);
-            camera_center += glm::vec3(0.1, 0, 0);
+            camera_pos += glm::vec3(0.4, 0, 0);
+            camera_center += glm::vec3(0.4, 0, 0);
         }
     }
     if (space)
@@ -122,16 +134,40 @@ void initGL(GLFWwindow *window, int width, int height)
     player = Player(player_original_x, player_original_y);
     platform = Platform(-30, -28);
     ceiling = Platform(-30, 13);
+
     int wall_x = -15;
     for (int i = 0; i < 50; i++)
     {
         wall[i] = Wall(wall_x, -5);
         wall_x += 25;
     }
-    for (int i = 0; i < 1; i++)
+
+    float prev_c_x = -5;
+    for (int i = 0; i < 20; i++)
     {
-        Coin coin = Coin(-10, 0);
-        coins.push_back(coin);
+        float c_y = rand() % 12;
+        float c_x = prev_c_x + rand() % 10;
+        int num_coins = 2 + rand() % 5;
+        for (int j = 0; j < num_coins; j++)
+        {
+            int type = rand() % 4 + 1;
+            Coin coin = Coin(c_x, c_y, type);
+            coins.push_back(coin);
+            c_x += 1.0;
+        }
+        prev_c_x = c_x;
+    }
+
+    float prev_e_x = 5;
+    for (int i = 0; i < 20; i++)
+    {
+        float e_x = prev_e_x + rand() % 20;
+        float e_y = rand() % 12;
+        float e_len = 3 + rand() % 3;
+        float e_rot = -90 + rand() % 180;
+        Enemy1 en = Enemy1(e_x, e_y, e_len, e_rot);
+        enemies1.push_back(en);
+        prev_e_x = e_x + 3 * e_len;
     }
 
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
@@ -174,9 +210,20 @@ int main(int argc, char **argv)
             draw();
             glfwSwapBuffers(window);
 
-            if (coins[0].exist == true && detect_collision(player.box, coins[0].box))
+            int len = coins.size();
+            for (int i = 0; i < len; i++)
             {
-                coins[0].exist = false;
+                if (coins[i].exist == true && detect_collision(player.box, coins[i].box))
+                {
+                    coins[i].exist = false;
+                }
+            }
+
+            len = enemies1.size();
+            for (int i=0; i<len; i++)
+            {
+                if (detect_collision(player.box, enemies1[i].box))
+                cout << "DIE" << '\n';
             }
 
             tick_elements();

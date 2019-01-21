@@ -1,17 +1,15 @@
 #include "main.h"
 
-#ifndef COIN_H
-#define COIN_H
+#ifndef ENEMY1_H
+#define ENEMY1_H
 
-class Coin
+class Enemy1
 {
   public:
-    Coin() {}
-    Coin(float x, float y, int type);
+    Enemy1() {}
+    Enemy1(float x, float y, float length, float rotation);
     glm::vec3 position;
     float rotation;
-    bool exist;
-    int type;
     void draw(glm::mat4 VP);
     bounding_box_t box;
 
