@@ -14,7 +14,8 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-struct color_t {
+struct color_t
+{
     int r;
     int g;
     int b;
@@ -22,11 +23,11 @@ struct color_t {
 
 // nonedit.cpp
 GLFWwindow *initGLFW(int width, int height);
-GLuint     LoadShaders(const char *vertex_file_path, const char *fragment_file_path);
+GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path);
 struct VAO *create3DObject(GLenum primitive_mode, int numVertices, const GLfloat *vertex_buffer_data, const GLfloat *color_buffer_data, GLenum fill_mode = GL_FILL);
 struct VAO *create3DObject(GLenum primitive_mode, int numVertices, const GLfloat *vertex_buffer_data, const GLfloat red, const GLfloat green, const GLfloat blue, GLenum fill_mode = GL_FILL);
 struct VAO *create3DObject(GLenum primitive_mode, int numVertices, const GLfloat *vertex_buffer_data, const color_t color, GLenum fill_mode = GL_FILL);
-void       draw3DObject(struct VAO *vao);
+void draw3DObject(struct VAO *vao);
 
 // input.cpp
 void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -40,31 +41,40 @@ void quit(GLFWwindow *window);
 void reshapeWindow(GLFWwindow *window, int width, int height);
 
 // Types
-struct VAO {
+struct VAO
+{
     GLuint VertexArrayID;
     GLuint VertexBuffer;
     GLuint ColorBuffer;
 
     GLenum PrimitiveMode;
     GLenum FillMode;
-    int    NumVertices;
+    int NumVertices;
 };
 typedef struct VAO VAO;
 
-struct GLMatrices {
+struct GLMatrices
+{
     glm::mat4 projection;
     glm::mat4 model;
     glm::mat4 view;
-    GLuint    MatrixID;
+    GLuint MatrixID;
 };
 
 extern GLMatrices Matrices;
 
 // ---- Logic ----
 
-enum direction_t { DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT };
+enum direction_t
+{
+    DIR_UP,
+    DIR_RIGHT,
+    DIR_DOWN,
+    DIR_LEFT
+};
 
-struct bounding_box_t {
+struct bounding_box_t
+{
     float x;
     float y;
     float width;
@@ -85,9 +95,13 @@ extern const color_t COLOR_YELLOW;
 extern const color_t COLOR_BLACK;
 extern const color_t COLOR_LIGHT_GREY;
 extern const color_t COLOR_DARK_GREY;
+extern const color_t COLOR_CYAN;
+extern const color_t COLOR_DARK_GREEN;
 extern const color_t COLOR_COIN1;
 extern const color_t COLOR_COIN2;
 extern const color_t COLOR_COIN3;
 extern const color_t COLOR_COIN4;
+extern const color_t COLOR_ORANGE;
+extern const color_t COLOR_BLUE;
 
 #endif

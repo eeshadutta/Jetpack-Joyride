@@ -17,7 +17,7 @@ Player::Player(float x, float y)
         -1.0f, -1.0f, 0.0f,
         -1.0f, 1.0f, 0.0f,
     };
-    this->object = create3DObject(GL_TRIANGLES, 2 * 3, vertex_buffer_data, COLOR_GREEN, GL_FILL);
+    this->object = create3DObject(GL_TRIANGLES, 2 * 3, vertex_buffer_data, COLOR_RED, GL_FILL);
 }
 
 void Player::draw(glm::mat4 VP)

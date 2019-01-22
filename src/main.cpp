@@ -6,6 +6,8 @@
 #include "wall.h"
 #include "coin.h"
 #include "enemy1.h"
+#include "boomerang.h"
+#include "waterballoon.h"
 
 using namespace std;
 
@@ -19,12 +21,19 @@ Platform ceiling;
 Wall wall[50];
 vector<Coin> coins;
 vector<Enemy1> enemies1;
+Boomerang boomerang;
+WaterBalloon waterballoon;
 
 float screen_zoom = 0.25, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
 float speed_horizontal, speed_vertical;
 float player_original_x, player_original_y;
+float boomerang_speed_x, boomerang_speed_y;
+
 glm::vec3 camera_pos, camera_center, camera_up;
+glm::mat4 VP;
+
+int points = 0, coins_collected = 0;
 
 Timer t60(1.0 / 60);
 
@@ -33,7 +42,8 @@ void draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(programID);
     Matrices.view = glm::lookAt(camera_pos, camera_center, camera_up); // Fixed camera for 2D (ortho) in XY plane
-    glm::mat4 VP = Matrices.projection * Matrices.view;
+    // glm::mat4 VP = Matrices.projection * Matrices.view;
+    VP = Matrices.projection * Matrices.view;
     glm::mat4 MVP;
 
     // Scene render
@@ -53,7 +63,10 @@ void draw()
     {
         enemies1[i].draw(VP);
     }
+    if (waterballoon.move)
+        waterballoon.draw(VP);
     player.draw(VP);
+    boomerang.draw(VP);
 }
 
 void tick_input(GLFWwindow *window)
@@ -62,6 +75,7 @@ void tick_input(GLFWwindow *window)
     int right = glfwGetKey(window, GLFW_KEY_RIGHT);
     int space = glfwGetKey(window, GLFW_KEY_SPACE);
     int down = glfwGetKey(window, GLFW_KEY_DOWN);
+    int water_balloon = glfwGetKey(window, GLFW_KEY_W);
 
     if (left)
     {
@@ -100,6 +114,12 @@ void tick_input(GLFWwindow *window)
             player.box.y = player.position.y;
         }
     }
+    if (water_balloon)
+    {
+        waterballoon.position.x = player.position.x;
+        waterballoon.position.y = player.position.y;
+        waterballoon.move = true;
+    }
 }
 
 void tick_elements()
@@ -126,6 +146,45 @@ void tick_elements()
             speed_vertical = 0;
         }
     }
+
+    if (boomerang.direction == -1)
+    {
+        boomerang.tick(-0.2, 0);
+        if (boomerang.position.x <= player.position.x - 8)
+            boomerang.direction = -2;
+    }
+    if (boomerang.direction == 1)
+    {
+        boomerang.tick(0.2, 0);
+        if (boomerang.position.x >= player.position.x + 50)
+            boomerang.direction = 2;
+    }
+
+    if (boomerang.direction == -2)
+    {
+        boomerang.rotate(2);
+        if (boomerang.rotation <= 90)
+            boomerang.tick(-0.1, -0.05);
+        else
+            boomerang.tick(0.1, -0.05);
+        if (boomerang.rotation >= 180)
+            boomerang.direction = 1;
+    }
+    if (boomerang.direction == 2)
+    {
+        boomerang.rotate(2);
+        if (boomerang.rotation <= 270)
+            boomerang.tick(0.1, 0.05);
+        else
+            boomerang.tick(-0.1, 0.05);
+        if (boomerang.rotation <= 0)
+            boomerang.direction = -1;
+    }
+
+    if (waterballoon.move)
+    {
+        waterballoon.tick(0.1, 0.04);
+    }
 }
 
 void initGL(GLFWwindow *window, int width, int height)
@@ -143,7 +202,7 @@ void initGL(GLFWwindow *window, int width, int height)
     }
 
     float prev_c_x = -5;
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 30; i++)
     {
         float c_y = rand() % 12;
         float c_x = prev_c_x + rand() % 10;
@@ -170,6 +229,9 @@ void initGL(GLFWwindow *window, int width, int height)
         prev_e_x = e_x + 3 * e_len;
     }
 
+    boomerang = Boomerang(40, 0);
+    waterballoon = WaterBalloon(player_original_x, player_original_y);
+
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
 
@@ -194,6 +256,7 @@ int main(int argc, char **argv)
     int height = 1200;
     player_original_x = -12;
     player_original_y = -7;
+    boomerang_speed_x = -0.2;
 
     window = initGLFW(width, height);
     initGL(window, width, height);
@@ -201,6 +264,16 @@ int main(int argc, char **argv)
     camera_pos = glm::vec3(0, 0, 3);
     camera_center = glm::vec3(0, 0, 0);
     camera_up = glm::vec3(0, 1, 0);
+
+    // Matrices.model = glm::mat4(1.0f);
+    // glm::mat4 translate = glm::translate(enemies1[0].position);
+    // glm::mat4 rotate = glm::rotate((float)(enemies1[0].rotation * M_PI / 180.0f), glm::vec3(0, 0, 1));
+    // Matrices.model *= (translate * rotate);
+    // glm::mat4 MVP = VP * Matrices.model;
+    // glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    // glm::vec4 originalvec = glm::vec4(0, 0, 0, 1);
+    // glm::vec4 finalvec = MVP * originalvec;
+    // cout << finalvec.x << finalvec.y << finalvec.z << finalvec.w << '\n';
 
     /* Draw in loop */
     while (!glfwWindowShouldClose(window))
@@ -215,15 +288,17 @@ int main(int argc, char **argv)
             {
                 if (coins[i].exist == true && detect_collision(player.box, coins[i].box))
                 {
+                    points += coins[i].type * 5;
+                    coins_collected++;
                     coins[i].exist = false;
                 }
             }
 
             len = enemies1.size();
-            for (int i=0; i<len; i++)
+            for (int i = 0; i < len; i++)
             {
                 if (detect_collision(player.box, enemies1[i].box))
-                cout << "DIE" << '\n';
+                    cout << "DIE" << '\n';
             }
 
             tick_elements();
