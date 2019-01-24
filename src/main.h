@@ -5,6 +5,7 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
+#include <time.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -103,5 +104,8 @@ extern const color_t COLOR_COIN3;
 extern const color_t COLOR_COIN4;
 extern const color_t COLOR_ORANGE;
 extern const color_t COLOR_BLUE;
+extern const color_t COLOR_MAROON;
+extern const color_t COLOR_GOLDEN;
+extern const color_t COLOR_ICE;
 
 #endif

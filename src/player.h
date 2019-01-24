@@ -10,6 +10,7 @@ public:
   Player(float x, float y);
   glm::vec3 position;
   float rotation;
+  float magnet_influence_x, magnet_influence_y;
   void draw(glm::mat4 VP);
   void set_position(float x, float y);
   void tick(float speed_x, float speed_y);

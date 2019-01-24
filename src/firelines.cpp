@@ -1,8 +1,8 @@
-#include "enemy1.h"
+#include "firelines.h"
 #include "main.h"
 #define pi 3.14159265358979323846
 
-Enemy1::Enemy1(float x, float y, float length, float rotation)
+Firelines::Firelines(float x, float y, float length, float rotation)
 {
     this->position = glm::vec3(x, y, 0);
     this->rotation = rotation;
@@ -61,10 +61,11 @@ Enemy1::Enemy1(float x, float y, float length, float rotation)
     box.width = length + 2 * r;
     box.height = r;
 
-    this->object = create3DObject(GL_TRIANGLES, 6 * (n + 1), vertex_buffer_data, COLOR_YELLOW, GL_FILL);
+    this->object1 = create3DObject(GL_TRIANGLES, 6 * n, vertex_buffer_data, COLOR_YELLOW, GL_FILL);
+    this->object2 = create3DObject(GL_TRIANGLES, 3 * 2, vertex_buffer_data + 18 * n, COLOR_ORANGE, GL_FILL);
 }
 
-void Enemy1::draw(glm::mat4 VP)
+void Firelines::draw(glm::mat4 VP)
 {
     Matrices.model = glm::mat4(1.0f);
     glm::mat4 translate = glm::translate(this->position);
@@ -72,5 +73,6 @@ void Enemy1::draw(glm::mat4 VP)
     Matrices.model *= (translate * rotate);
     glm::mat4 MVP = VP * Matrices.model;
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(this->object);
+    draw3DObject(this->object2);
+    draw3DObject(this->object1);
 }

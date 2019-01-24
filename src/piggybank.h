@@ -1,20 +1,19 @@
 #include "main.h"
 
-#ifndef BOOMERANG_H
-#define BOOMERANG_H
+#ifndef PIGGYBANK_H
+#define PIGGYBANK_H
 
-class Boomerang
+class Piggybank
 {
   public:
-    Boomerang() {}
-    Boomerang(float x, float y);
+    Piggybank() {}
+    Piggybank(float x, float y);
     glm::vec3 position;
     float rotation;
+    float speed_x, speed_y;
     bool exist;
     void draw(glm::mat4 VP);
-    void tick(float speed_x, float speed_y);
-    void rotate(int angle);
-    int direction;
+    void tick();
     bounding_box_t box;
 
   private:

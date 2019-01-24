@@ -1,25 +1,24 @@
 #include "main.h"
 
-#ifndef WATERBALLOON_H
-#define WATERBALLOON_H
+#ifndef POWERUP_H
+#define POWERUP_H
 
-class WaterBalloon
+class Powerup
 {
   public:
-    WaterBalloon() {}
-    WaterBalloon(float x, float y, color_t color);
+    Powerup() {}
+    Powerup(float x, float y);
     glm::vec3 position;
     float rotation;
-    bool move;
     float speed_x, speed_y;
-    float radius;
     bool exist;
     void draw(glm::mat4 VP);
     void tick();
     bounding_box_t box;
 
   private:
-    VAO *object;
+    VAO *object1;
+    VAO *object2;
 };
 
 #endif

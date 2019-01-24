@@ -6,6 +6,13 @@ Boomerang::Boomerang(float x, float y)
     this->position = glm::vec3(x, y, 0);
     this->rotation = 0;
     this->direction = -1;
+    this->exist = false;
+
+    this->box.x = x;
+    this->box.y = y;
+    this->box.width = 4.8;
+    this->box.height = 2.4;
+
     static const GLfloat vertex_data_1[] = {
         0.0, 0.0, 0.0,
         -0.3, 0.3, 0.0,
@@ -36,13 +43,13 @@ Boomerang::Boomerang(float x, float y)
     static const GLfloat vertex_data_3[] = {
         1.2, 0.6, 0.0,
         1.2, 0.2, 0.0,
-        2.0, 0.2, 0.0,
+        2.4, 0.2, 0.0,
         1.2, 0.2, 0.0,
         1.2, -0.2, 0.0,
-        2.0, -0.2, 0.0,
+        2.4, -0.2, 0.0,
         1.2, -0.2, 0.0,
         1.2, -0.6, 0.0,
-        2.0, -0.6, 0.0,
+        2.4, -0.6, 0.0,
     };
     this->object3 = create3DObject(GL_TRIANGLES, 3 * 3, vertex_data_3, COLOR_ORANGE, GL_FILL);
 }
@@ -64,6 +71,8 @@ void Boomerang::tick(float speed_x, float speed_y)
 {
     this->position.x += speed_x;
     this->position.y += speed_y;
+    this->box.x = this->position.x;
+    this->box.y = this->position.y;
 }
 
 void Boomerang::rotate(int angle)

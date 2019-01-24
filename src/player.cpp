@@ -5,6 +5,9 @@ Player::Player(float x, float y)
 {
     this->position = glm::vec3(x, y, 0);
     this->rotation = 0;
+    this->magnet_influence_x = 0;
+    this->magnet_influence_y = 0;
+    
     box.x = x;
     box.y = y;
     box.width = 2.0;
@@ -38,8 +41,8 @@ void Player::set_position(float x, float y)
 
 void Player::tick(float speed_x, float speed_y)
 {
-    this->position.x += speed_x;
-    this->position.y += speed_y;
+    this->position.x += speed_x + this->magnet_influence_x;
+    this->position.y += speed_y + this->magnet_influence_y;
     box.x = this->position.x;
     box.y = this->position.y;
 }
