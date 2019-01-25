@@ -47,6 +47,7 @@ float screen_zoom = 0.25, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
 float speed_horizontal, speed_vertical;
 float player_original_x, player_original_y;
+float dragon_x;
 float boomerang_speed_x, boomerang_speed_y;
 float ceiling_pos = 11;
 int water_balloon, num_max_waterballoons;
@@ -217,16 +218,21 @@ void tick_input(GLFWwindow *window)
 
     if (right)
     {
+        if (player.position.x < dragon_x - 8)
         speed_horizontal = 0.4;
         player.tick(speed_horizontal, 0);
         speed_horizontal = 0;
-        if (player.position.x > camera_center.x + 7)
+        if (player.position.x > camera_center.x)
         {
             camera_pos += glm::vec3(0.4, 0, 0);
             camera_center += glm::vec3(0.4, 0, 0);
             int len = scores.size();
             for (int i = 0; i < len; i++)
                 scores[i].position.x += 0.4;
+        }
+        else 
+        {
+            speed_horizontal = 0;
         }
     }
 
@@ -264,6 +270,11 @@ void tick_input(GLFWwindow *window)
                 smoke.push_back(sb);
             }
         }
+    }
+
+    if (down)
+    {
+        player.tick(0, -0.05);
     }
 
     if (water_balloon)
@@ -357,20 +368,20 @@ void tick_elements()
         }
     }
 
-    if (abs(dragon.position.y - player.position.y) >= 5)
+    if (abs(dragon.position.y - player.position.y) >= 0)
     {
         if (dragon.position.y > player.position.y)
-            dragon.speed_y = -0.1;
+            dragon.speed_y = -0.3;
         if (dragon.position.y < player.position.y)
-            dragon.speed_y = 0.1;
+            dragon.speed_y = 0.3;
         dragon.tick();
     }
-    if (dragon.position.y <= player_original_y + 3)
-        dragon.position.y = player_original_y + 3;
-    if (dragon.position.y >= ceiling_pos - 3)
-        dragon.position.y = ceiling_pos - 3;
+    if (dragon.position.y <= player_original_y + 2)
+        dragon.position.y = player_original_y + 2;
+    if (dragon.position.y >= ceiling_pos - 2)
+        dragon.position.y = ceiling_pos - 2;
 
-    if (dragon.position.x <= player.position.x)
+    if (dragon.position.x <= player.position.x + 10)
     {
         dragon_appear = time(NULL);
     }
@@ -530,10 +541,10 @@ void initGL(GLFWwindow *window, int width, int height)
             coins.push_back(coin);
             c_x += 1.0;
         }
-        prev_c_x = c_x + num_coins;
+        prev_c_x = c_x + 2 * num_coins;
     }
 
-    float prev_fl_x = 10;
+    float prev_fl_x = 0;
     for (int i = 0; i < 20; i++)
     {
         int f_x = rand() % 20;
@@ -542,11 +553,11 @@ void initGL(GLFWwindow *window, int width, int height)
         int f_r = rand() % 180;
         float fl_x = prev_fl_x + 10 + (float)f_x;
         float fl_y = player_original_y + 5 + (float)f_y;
-        float fl_len = 3 + (float)f_l;
+        float fl_len = 4 + (float)f_l;
         float fl_rot = -90 + (float)f_r;
         Firelines fl = Firelines(fl_x, fl_y, fl_len, fl_rot);
         firelines.push_back(fl);
-        prev_fl_x = fl_x + 3 * fl_len;
+        prev_fl_x = fl_x + 2 * fl_len;
     }
 
     float prev_fb_x = 10;
@@ -564,7 +575,7 @@ void initGL(GLFWwindow *window, int width, int height)
 
     boomerang = Boomerang(40, 0);
 
-    dragon = Dragon(20, 20);
+    dragon = Dragon(dragon_x, 20);
 
     magnet = Magnet(7, player_original_y);
 
@@ -661,7 +672,8 @@ int main(int argc, char **argv)
     player_original_x = -12;
     player_original_y = -6;
     boomerang_speed_x = -0.2;
-    num_max_waterballoons = 10;
+    num_max_waterballoons = 30;
+    dragon_x = 50;
 
     window = initGLFW(width, height);
     initGL(window, width, height);
@@ -689,12 +701,31 @@ int main(int argc, char **argv)
                 }
             }
 
-            // len = firelines.size();
-            // for (int i = 0; i < len; i++)
-            // {
-            //     if (detect_collision(player.box, firelines[i].box))
-            //         cout << "DIE" << '\n';
-            // }
+            len = firelines.size();
+            for (int i = 0; i < len; i++)
+            {
+                float x1, y1, x2, y2;
+                x1 = firelines[i].position.x + (firelines[i].length / 2) * cos(firelines[i].rotation * M_PI / 180.0f);
+                y1 = firelines[i].position.y + (firelines[i].length / 2) * sin(firelines[i].rotation * M_PI / 180.0f);
+                x2 = firelines[i].position.x - (firelines[i].length / 2) * cos(firelines[i].rotation * M_PI / 180.0f);
+                y2 = firelines[i].position.y - (firelines[i].length / 2) * sin(firelines[i].rotation * M_PI / 180.0f);
+
+                if (firelines[i].exist && detect_collision_line(x1, y1, x2, y2))
+                {
+                    points -= 5;
+                    player.position.y = player_original_y;
+                    player.box.y = player.position.y;
+                }
+
+                int l = waterballoons.size();
+                for (int j = 0; j<l; j++)
+                {
+                    if (waterballoons[i].exist && firelines[i].exist && detect_collision_line(x1, y1, x2, y2))
+                    {
+                        firelines[i].exist = false;
+                    }
+                }
+            }
 
             len = firebeams.size();
             for (int i = 0; i < len; i++)
@@ -748,6 +779,45 @@ bool detect_collision(bounding_box_t a, bounding_box_t b)
 {
     return (abs(a.x - b.x) * 2 < (a.width + b.width)) &&
            (abs(a.y - b.y) * 2 < (a.height + b.height));
+}
+
+bool detect_collision_line(float x1, float y1, float x2, float y2)
+{
+    float a1, b1, c1, px, py;
+
+    a1 = y2 - y1;
+    b1 = x1 - x2;
+    c1 = a1 * x1 + b1 * y1;
+
+    float y_upper = player.box.y + player.box.height / 2;
+    float y_lower = player.box.y - player.box.height / 2;
+    float x_left = player.box.x - player.box.width / 2;
+    float x_right = player.box.x + player.box.width / 2;
+
+    px = (c1 - b1 * y_upper) / a1;
+    if (px >= min(x1, x2) && px <= max(x1, x2) && px >= x_left && px <= x_right)
+    {
+        return true;
+    }
+
+    px = (c1 - b1 * y_lower) / a1;
+    if (px >= min(x1, x2) && px <= max(x1, x2) && px >= x_left && px <= x_right)
+    {
+        return true;
+    }
+
+    py = (c1 - a1 * x_left) / b1;
+    if (py >= min(y1, y2) && py <= max(y1, y2) && py >= y_lower && py <= y_upper)
+    {
+        return true;
+    }
+
+    py = (c1 - a1 * x_right) / b1;
+    if (py >= min(y1, y2) && py <= max(y1, y2) && py >= y_lower && py <= y_upper)
+    {
+        return true;
+    }
+    return false;
 }
 
 void reset_screen()

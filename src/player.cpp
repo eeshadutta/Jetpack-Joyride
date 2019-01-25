@@ -11,8 +11,8 @@ Player::Player(float x, float y)
 
     box.x = x;
     box.y = y;
-    box.width = 2.0;
-    box.height = 2.0;
+    box.width = 4.0;
+    box.height = 4.0;
 
     int n = 100;
     float r = 0.4;
@@ -164,6 +164,6 @@ void Player::tick(float speed_x, float speed_y)
 {
     this->position.x += speed_x + this->magnet_influence_x;
     this->position.y += speed_y + this->magnet_influence_y;
-    box.x = this->position.x;
-    box.y = this->position.y;
+    this->box.x = this->position.x;
+    this->box.y = this->position.y;
 }

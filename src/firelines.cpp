@@ -6,6 +6,8 @@ Firelines::Firelines(float x, float y, float length, float rotation)
 {
     this->position = glm::vec3(x, y, 0);
     this->rotation = rotation;
+    this->length = length;
+    this->exist = true;
 
     int n = 100;
     float r = 0.3;
@@ -73,6 +75,7 @@ void Firelines::draw(glm::mat4 VP)
     Matrices.model *= (translate * rotate);
     glm::mat4 MVP = VP * Matrices.model;
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(this->object2);
+    if (this->exist)
+        draw3DObject(this->object2);
     draw3DObject(this->object1);
 }

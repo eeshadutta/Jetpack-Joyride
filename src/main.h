@@ -83,6 +83,7 @@ struct bounding_box_t
 };
 
 bool detect_collision(bounding_box_t a, bounding_box_t b);
+bool detect_collision_line(float x1, float y1, float x2, float y2);
 
 extern float screen_zoom, screen_center_x, screen_center_y;
 void reset_screen();

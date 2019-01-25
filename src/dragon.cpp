@@ -7,7 +7,7 @@ Dragon::Dragon(float x, float y)
     this->position = glm::vec3(x, y, 0);
     this->rotation = 45;
     this->speed_x = 0;
-    this->speed_y = 0;
+    this->speed_y = 0.2;
 
     static const GLfloat vertex1[] = {
         1.5, 2.5, 0.0,

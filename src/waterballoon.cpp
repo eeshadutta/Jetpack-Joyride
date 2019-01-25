@@ -7,15 +7,12 @@ WaterBalloon::WaterBalloon(float x, float y, float radius, color_t color_out, co
     this->position = glm::vec3(x, y, 0);
     this->rotation = 0;
     this->move = false;
-    // this->speed_x = 0.1;
-    // this->speed_y = 0.4;
-    // this->radius = 0.3;
     this->exist = true;
 
     this->box.x = x;
     this->box.y = y;
-    this->box.width = 2 * this->radius;
-    this->box.height = 2 * this->radius;
+    this->box.width = 2 * radius;
+    this->box.height = 2 * radius;
 
     int n = 100;
     float r = radius;
