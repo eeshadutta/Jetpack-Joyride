@@ -7,7 +7,7 @@ class Platform
 {
 public:
   Platform() {}
-  Platform(float x, float y);
+  Platform(float x, float y, color_t color);
   glm::vec3 position;
   float rotation;
   void draw(glm::mat4 VP);

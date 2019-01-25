@@ -7,7 +7,7 @@ class WaterBalloon
 {
   public:
     WaterBalloon() {}
-    WaterBalloon(float x, float y, color_t color);
+    WaterBalloon(float x, float y, float radius, color_t color_out, color_t color_in);
     glm::vec3 position;
     float rotation;
     bool move;
@@ -19,7 +19,8 @@ class WaterBalloon
     bounding_box_t box;
 
   private:
-    VAO *object;
+    VAO *object1;
+    VAO *object2;
 };
 
 #endif

@@ -13,6 +13,7 @@
 #include "magnet.h"
 #include "piggybank.h"
 #include "powerup.h"
+#include "score.h"
 
 using namespace std;
 
@@ -21,6 +22,7 @@ GLuint programID;
 GLFWwindow *window;
 
 Player player;
+vector<WaterBalloon> smoke;
 
 Platform platform;
 Platform ceiling;
@@ -39,12 +41,14 @@ Magnet magnet;
 Piggybank piggybank;
 Powerup powerup;
 
+vector<Score> scores;
+
 float screen_zoom = 0.25, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
 float speed_horizontal, speed_vertical;
 float player_original_x, player_original_y;
 float boomerang_speed_x, boomerang_speed_y;
-float ceiling_pos = 12;
+float ceiling_pos = 11;
 int water_balloon, num_max_waterballoons;
 
 glm::vec3 camera_pos, camera_center, camera_up;
@@ -98,11 +102,6 @@ void draw()
             iceballs[i].draw(VP);
     }
 
-    platform.draw(VP);
-    ceiling.draw(VP);
-
-    player.draw(VP);
-
     len = waterballoons.size();
     for (int i = 0; i < len; i++)
     {
@@ -118,6 +117,76 @@ void draw()
 
     if (powerup.exist)
         powerup.draw(VP);
+
+    platform.draw(VP);
+    ceiling.draw(VP);
+
+    player.draw(VP);
+    len = smoke.size();
+    for (int i = 0; i < len; i++)
+    {
+        if (smoke[i].exist)
+            smoke[i].draw(VP);
+    }
+
+    len = scores.size();
+    for (int i = 0; i < len; i++)
+    {
+        scores[i].draw(VP);
+    }
+}
+
+void score_decide(int digit, int i)
+{
+    if (digit == 0)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = true;
+        scores[i].exist7 = false;
+    }
+    if (digit == 1)
+    {
+        scores[i].exist2 = scores[i].exist3 = true;
+        scores[i].exist1 = scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = scores[i].exist7 = false;
+    }
+    if (digit == 2)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist4 = scores[i].exist5 = scores[i].exist7 = true;
+        scores[i].exist3 = scores[i].exist6 = false;
+    }
+    if (digit == 3)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = scores[i].exist4 = scores[i].exist7 = true;
+        scores[i].exist5 = scores[i].exist6 = false;
+    }
+    if (digit == 4)
+    {
+        scores[i].exist2 = scores[i].exist3 = scores[i].exist6 = scores[i].exist7 = true;
+        scores[i].exist1 = scores[i].exist4 = scores[i].exist5 = false;
+    }
+    if (digit == 5)
+    {
+        scores[i].exist1 = scores[i].exist3 = scores[i].exist4 = scores[i].exist6 = scores[i].exist7 = true;
+        scores[i].exist2 = scores[i].exist5 = false;
+    }
+    if (digit == 6)
+    {
+        scores[i].exist1 = scores[i].exist3 = scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = scores[i].exist7 = true;
+        scores[i].exist2 = false;
+    }
+    if (digit == 7)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = true;
+        scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = scores[i].exist7 = true;
+    }
+    if (digit == 8)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = scores[i].exist7 = true;
+    }
+    if (digit == 9)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = scores[i].exist4 = scores[i].exist6 = scores[i].exist7 = true;
+        scores[i].exist5 = false;
+    }
 }
 
 void tick_input(GLFWwindow *window)
@@ -140,6 +209,9 @@ void tick_input(GLFWwindow *window)
         {
             camera_pos -= glm::vec3(0.4, 0, 0);
             camera_center -= glm::vec3(0.4, 0, 0);
+            int len = scores.size();
+            for (int i = 0; i < len; i++)
+                scores[i].position.x -= 0.4;
         }
     }
 
@@ -152,6 +224,9 @@ void tick_input(GLFWwindow *window)
         {
             camera_pos += glm::vec3(0.4, 0, 0);
             camera_center += glm::vec3(0.4, 0, 0);
+            int len = scores.size();
+            for (int i = 0; i < len; i++)
+                scores[i].position.x += 0.4;
         }
     }
 
@@ -167,18 +242,44 @@ void tick_input(GLFWwindow *window)
             player.position.y = ceiling_pos;
             player.box.y = player.position.y;
         }
+        int type = rand() % 3;
+        color_t color_out;
+        if (type == 0)
+            color_out = COLOR_MAROON;
+        else if (type == 1)
+            color_out = COLOR_ORANGE;
+        else
+            color_out = COLOR_YELLOW;
+        WaterBalloon sb = WaterBalloon(player.position.x - 0.5, player.position.y - 0.2, 0.2, color_out, COLOR_BACKGROUND);
+        sb.speed_x = 0;
+        sb.speed_y = -0.01;
+        int num_sb = smoke.size();
+        if (num_sb == 0)
+            smoke.push_back(sb);
+        else
+        {
+            float x1 = sb.position.x, y1 = sb.position.y, x2 = smoke[num_sb - 1].position.x, y2 = smoke[num_sb - 1].position.y;
+            if (sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) > 0.4)
+            {
+                smoke.push_back(sb);
+            }
+        }
     }
 
     if (water_balloon)
     {
         if (num_wb == -1)
         {
-            WaterBalloon wb = WaterBalloon(player.position.x, player.position.y, COLOR_BLUE);
+            WaterBalloon wb = WaterBalloon(player.position.x, player.position.y, 0.3, COLOR_BLUE, COLOR_BLUE);
+            wb.speed_x = 0.1;
+            wb.speed_y = 0.4;
             waterballoons.push_back(wb);
             num_wb++;
             num_max_waterballoons--;
         }
-        WaterBalloon wb = WaterBalloon(player.position.x, player.position.y, COLOR_BLUE);
+        WaterBalloon wb = WaterBalloon(player.position.x, player.position.y, 0.3, COLOR_BLUE, COLOR_BLUE);
+        wb.speed_x = 0.1;
+        wb.speed_y = 0.4;
         float x1 = wb.position.x, y1 = wb.position.y, x2 = waterballoons[num_wb].position.x, y2 = waterballoons[num_wb].position.y;
         if (sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) > 6.0 && num_max_waterballoons > 0)
         {
@@ -199,16 +300,6 @@ void tick_elements()
 {
     if (player.position.y > player_original_y && !glfwGetKey(window, GLFW_KEY_SPACE))
     {
-        // int loop = speed_vertical * 100 * -1;
-        // float initial_speed_vertical = -0.01;
-        // for (int i = 1; i <= loop; i++)
-        // {
-        //     player.tick(speed_horizontal, initial_speed_vertical);
-        //     if (coin[0].exist == true && detect_collision(player.box, coin[0].box))
-        //     {
-        //         coin[0].exist = false;
-        //     }
-        // }
         speed_vertical -= 0.02;
         player.tick(speed_horizontal, speed_vertical);
         if (player.position.y < player_original_y)
@@ -279,11 +370,6 @@ void tick_elements()
     if (dragon.position.y >= ceiling_pos - 3)
         dragon.position.y = ceiling_pos - 3;
 
-    // if (dragon.position.x <= player.position.x + 20)
-    // {
-    //     dragon.iceball();
-    // }
-
     if (dragon.position.x <= player.position.x)
     {
         dragon_appear = time(NULL);
@@ -291,7 +377,7 @@ void tick_elements()
     if ((time(NULL) - dragon_appear) % 2 == 0)
     {
         int num_ib = iceballs.size();
-        WaterBalloon iceball = WaterBalloon(dragon.position.x, dragon.position.y, COLOR_ICE);
+        WaterBalloon iceball = WaterBalloon(dragon.position.x, dragon.position.y, 0.3, COLOR_ICE, COLOR_ICE);
         if (num_ib == 0)
         {
             iceball.speed_x = -0.05;
@@ -335,16 +421,6 @@ void tick_elements()
             if (player.position.y >= magnet.position.y)
                 player.magnet_influence_y -= 0.01;
             player.tick(speed_horizontal, speed_vertical);
-            // if (player.position.x > camera_center.x + 7)
-            // {
-            //     camera_pos += glm::vec3(speed_horizontal + player.magnet_influence_x, 0, 0);
-            //     camera_center += glm::vec3(speed_horizontal + player.magnet_influence_x, 0, 0);
-            // }
-            // if (player.position.x < camera_center.x - 7 && player.position.x > player_original_x)
-            // {
-            //     camera_pos -= glm::vec3(speed_horizontal + player.magnet_influence_x, 0, 0);
-            //     camera_center -= glm::vec3(speed_horizontal + player.magnet_influence_x, 0, 0);
-            // }
         }
         else
         {
@@ -398,14 +474,41 @@ void tick_elements()
             powerup.speed_y = 0.1;
         powerup.tick();
     }
+
+    len = smoke.size();
+    for (int i = 0; i < len; i++)
+    {
+        if (smoke[i].exist)
+            smoke[i].tick();
+
+        if (player.position.y - smoke[i].position.y >= 4 || player.position.x - smoke[i].position.x >= 4 || smoke[i].position.x - player.position.x >= 4)
+            smoke[i].exist = false;
+    }
+
+    int buf = points;
+    int h = buf / 100;
+    buf %= 100;
+    int t = buf / 10;
+    int u = buf % 10;
+    score_decide(h, 2);
+    score_decide(t, 3);
+    score_decide(u, 4);
+    t = coins_collected / 10;
+    u = coins_collected % 10;
+    score_decide(t, 7);
+    score_decide(u, 8);
+    t = num_max_waterballoons / 10;
+    u = num_max_waterballoons % 10;
+    score_decide(t, 11);
+    score_decide(u, 12);
 }
 
 void initGL(GLFWwindow *window, int width, int height)
 {
     // Create the models
     player = Player(player_original_x, player_original_y);
-    platform = Platform(-30, -28);
-    ceiling = Platform(-30, 13);
+    platform = Platform(-30, -28, COLOR_BLACK);
+    ceiling = Platform(-30, 13, COLOR_LIGHT_GREY);
 
     int wall_x = -15;
     for (int i = 0; i < 50; i++)
@@ -468,6 +571,74 @@ void initGL(GLFWwindow *window, int width, int height)
     piggybank = Piggybank(0, 0);
     powerup = Powerup(4, 4);
 
+    float pos_org_x = camera_pos.x - 15;
+    float pos_org_y = camera_pos.y + 15;
+    Score s;
+    Score p;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist5 = s.exist6 = s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 4.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 0.8;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.1;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 4.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 0.6;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
     reshapeWindow(window, width, height);
@@ -488,7 +659,7 @@ int main(int argc, char **argv)
     int width = 1200;
     int height = 1200;
     player_original_x = -12;
-    player_original_y = -7;
+    player_original_y = -6;
     boomerang_speed_x = -0.2;
     num_max_waterballoons = 10;
 
@@ -513,8 +684,6 @@ int main(int argc, char **argv)
                 if (coins[i].exist == true && detect_collision(player.box, coins[i].box))
                 {
                     points += coins[i].type * 5;
-                    cout << points << endl;
-                    cout << points << endl;
                     coins_collected++;
                     coins[i].exist = false;
                 }
@@ -533,7 +702,6 @@ int main(int argc, char **argv)
                 if (detect_collision(player.box, firebeams[i].box))
                 {
                     points -= 10;
-                    cout << points << endl;
                     player.position.y = player_original_y;
                     player.box.y = player.position.y;
                 }
@@ -545,7 +713,6 @@ int main(int argc, char **argv)
                 if (iceballs[i].exist && detect_collision(player.box, iceballs[i].box))
                 {
                     points -= 5;
-                    cout << points << endl;
                     iceballs[i].exist = false;
                 }
             }
@@ -554,20 +721,17 @@ int main(int argc, char **argv)
             {
                 boomerang.exist = false;
                 points -= 20;
-                cout << points << endl;
             }
 
             if (piggybank.exist && detect_collision(player.box, piggybank.box))
             {
                 points += 50;
-                cout << points << endl;
                 piggybank.exist = false;
             }
 
             if (powerup.exist && detect_collision(player.box, powerup.box))
             {
                 num_max_waterballoons += 5;
-                cout << num_max_waterballoons << endl;
                 powerup.exist = false;
             }
 

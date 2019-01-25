@@ -1,7 +1,7 @@
 #include "platform.h"
 #include "main.h"
 
-Platform::Platform(float x, float y)
+Platform::Platform(float x, float y, color_t color)
 {
     this->position = glm::vec3(x, y, 0);
     this->rotation = 0;
@@ -13,7 +13,7 @@ Platform::Platform(float x, float y)
         800.0f, 0.0f,  0.0f,
         800.0f, 20.0f, 0.0f,
     };
-    this->object = create3DObject(GL_TRIANGLES, 2 * 3, vertex_buffer_data, COLOR_BLACK, GL_FILL);
+    this->object = create3DObject(GL_TRIANGLES, 2 * 3, vertex_buffer_data, color, GL_FILL);
 }
 
 void Platform::draw(glm::mat4 VP)
