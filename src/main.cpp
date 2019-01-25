@@ -219,7 +219,7 @@ void tick_input(GLFWwindow *window)
     if (right)
     {
         if (player.position.x < dragon_x - 8)
-        speed_horizontal = 0.4;
+            speed_horizontal = 0.4;
         player.tick(speed_horizontal, 0);
         speed_horizontal = 0;
         if (player.position.x > camera_center.x)
@@ -230,7 +230,7 @@ void tick_input(GLFWwindow *window)
             for (int i = 0; i < len; i++)
                 scores[i].position.x += 0.4;
         }
-        else 
+        else
         {
             speed_horizontal = 0;
         }
@@ -557,7 +557,7 @@ void initGL(GLFWwindow *window, int width, int height)
         float fl_rot = -90 + (float)f_r;
         Firelines fl = Firelines(fl_x, fl_y, fl_len, fl_rot);
         firelines.push_back(fl);
-        prev_fl_x = fl_x + 2 * fl_len;
+        prev_fl_x = fl_x + fl_len;
     }
 
     float prev_fb_x = 10;
@@ -570,7 +570,7 @@ void initGL(GLFWwindow *window, int width, int height)
         float fb_len = 10;
         Firebeams fb = Firebeams(fb_x, fb_y, fb_len);
         firebeams.push_back(fb);
-        prev_fb_x = fb_x + 3 * fb_len;
+        prev_fb_x = fb_x + 5 * fb_len;
     }
 
     boomerang = Boomerang(40, 0);
@@ -673,7 +673,7 @@ int main(int argc, char **argv)
     player_original_y = -6;
     boomerang_speed_x = -0.2;
     num_max_waterballoons = 30;
-    dragon_x = 50;
+    dragon_x = 150;
 
     window = initGLFW(width, height);
     initGL(window, width, height);
@@ -695,9 +695,9 @@ int main(int argc, char **argv)
             {
                 if (coins[i].exist == true && detect_collision(player.box, coins[i].box))
                 {
+                    coins[i].exist = false;
                     points += coins[i].type * 5;
                     coins_collected++;
-                    coins[i].exist = false;
                 }
             }
 
@@ -710,7 +710,7 @@ int main(int argc, char **argv)
                 x2 = firelines[i].position.x - (firelines[i].length / 2) * cos(firelines[i].rotation * M_PI / 180.0f);
                 y2 = firelines[i].position.y - (firelines[i].length / 2) * sin(firelines[i].rotation * M_PI / 180.0f);
 
-                if (firelines[i].exist && detect_collision_line(x1, y1, x2, y2))
+                if (firelines[i].exist && detect_collision_line(x1, y1, x2, y2, player.box))
                 {
                     points -= 5;
                     player.position.y = player_original_y;
@@ -718,11 +718,12 @@ int main(int argc, char **argv)
                 }
 
                 int l = waterballoons.size();
-                for (int j = 0; j<l; j++)
+                for (int j = 0; j < l; j++)
                 {
-                    if (waterballoons[i].exist && firelines[i].exist && detect_collision_line(x1, y1, x2, y2))
+                    if (waterballoons[j].exist && firelines[i].exist && detect_collision_line(x1, y1, x2, y2, waterballoons[j].box))
                     {
                         firelines[i].exist = false;
+                        waterballoons[j].exist = false;
                     }
                 }
             }
@@ -743,8 +744,8 @@ int main(int argc, char **argv)
             {
                 if (iceballs[i].exist && detect_collision(player.box, iceballs[i].box))
                 {
-                    points -= 5;
                     iceballs[i].exist = false;
+                    points -= 5;
                 }
             }
 
@@ -756,14 +757,14 @@ int main(int argc, char **argv)
 
             if (piggybank.exist && detect_collision(player.box, piggybank.box))
             {
-                points += 50;
                 piggybank.exist = false;
+                points += 50;
             }
 
             if (powerup.exist && detect_collision(player.box, powerup.box))
             {
-                num_max_waterballoons += 5;
                 powerup.exist = false;
+                num_max_waterballoons += 5;
             }
 
             tick_elements();
@@ -781,7 +782,7 @@ bool detect_collision(bounding_box_t a, bounding_box_t b)
            (abs(a.y - b.y) * 2 < (a.height + b.height));
 }
 
-bool detect_collision_line(float x1, float y1, float x2, float y2)
+bool detect_collision_line(float x1, float y1, float x2, float y2, bounding_box_t box)
 {
     float a1, b1, c1, px, py;
 
@@ -789,10 +790,10 @@ bool detect_collision_line(float x1, float y1, float x2, float y2)
     b1 = x1 - x2;
     c1 = a1 * x1 + b1 * y1;
 
-    float y_upper = player.box.y + player.box.height / 2;
-    float y_lower = player.box.y - player.box.height / 2;
-    float x_left = player.box.x - player.box.width / 2;
-    float x_right = player.box.x + player.box.width / 2;
+    float y_upper = box.y + box.height / 2;
+    float y_lower = box.y - box.height / 2;
+    float x_left = box.x - box.width / 2;
+    float x_right = box.x + box.width / 2;
 
     px = (c1 - b1 * y_upper) / a1;
     if (px >= min(x1, x2) && px <= max(x1, x2) && px >= x_left && px <= x_right)

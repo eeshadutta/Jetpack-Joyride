@@ -33,7 +33,7 @@ WaterBalloon::WaterBalloon(float x, float y, float radius, color_t color_out, co
     this->object1 = create3DObject(GL_TRIANGLES, 3 * n, vertex_buffer_data, color_out, GL_FILL);
     
     n = 100;
-    r = radius - 0.05;
+    r = 0.9 * radius;
     theta = (2 * pi) / n;
     for (int i = 0; i < 9 * n; i += 9)
     {
