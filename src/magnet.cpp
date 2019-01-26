@@ -24,7 +24,7 @@ Magnet::Magnet(float x, float y)
             g_vertex_buffer_data[i + j] = 0.0f;
         theta += (2 * pi) / n;
     }
-    this->object1 = create3DObject(GL_TRIANGLES, 3 * n / 2, g_vertex_buffer_data, COLOR_MAROON, GL_FILL);
+    this->object1 = create3DObject(GL_TRIANGLES, 3 * n / 2, g_vertex_buffer_data, COLOR_GREY, GL_FILL);
     
     n = 100;
     float r2 = 0.5;
@@ -42,7 +42,7 @@ Magnet::Magnet(float x, float y)
             g_vertex_buffer_data[i + j] = 0.0f;
         theta += (2 * pi) / n;
     }
-    this->object2 = create3DObject(GL_TRIANGLES, 3 * n / 2, g_vertex_buffer_data, COLOR_BACKGROUND, GL_FILL);
+    this->object2 = create3DObject(GL_TRIANGLES, 3 * n / 2, g_vertex_buffer_data, COLOR_SKY, GL_FILL);
     
     static const GLfloat vertex_buffer_data[] = {
         r2, 0.0, 0.0,

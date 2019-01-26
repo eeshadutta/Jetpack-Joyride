@@ -10,6 +10,7 @@ class Ring
     Ring(float x, float y);
     glm::vec3 position;
     float rotation;
+    float radius;
     void draw(glm::mat4 VP);
 
   private:

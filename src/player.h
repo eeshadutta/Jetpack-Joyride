@@ -11,6 +11,8 @@ public:
   glm::vec3 position;
   float rotation;
   float magnet_influence_x, magnet_influence_y;
+  bool inside_ring;
+  bool shield;
   void draw(glm::mat4 VP);
   void set_position(float x, float y);
   void tick(float speed_x, float speed_y);
@@ -25,6 +27,7 @@ private:
   VAO *object6;
   VAO *object7;
   VAO *object8;
+  VAO *object9;
 };
 
 #endif

@@ -6,7 +6,7 @@ Piggybank::Piggybank(float x, float y)
 {
     this->position = glm::vec3(x, y, 0);
     this->rotation = 0;
-    this->speed_x = 0.2;
+    this->speed_x = 0.05;
     this->speed_y = 0.1;
     this->exist = true;
 
@@ -32,12 +32,13 @@ Piggybank::Piggybank(float x, float y)
         theta += (2 * pi) / n;
     }
     this->object1 = create3DObject(GL_TRIANGLES, 3 * n, vertex_buffer_data, COLOR_GOLDEN, GL_FILL);
+    
     static const GLfloat vertex_data[] = {
         0.0, 0.0, 0.0,
         -0.5, 1.2, 0.0,
         0.5, 1.2, 0.0,
     };
-    this->object2 = create3DObject(GL_TRIANGLES, 3 * 2, vertex_data, COLOR_MAROON, GL_FILL);    
+    this->object2 = create3DObject(GL_TRIANGLES, 3 * 2, vertex_data, COLOR_BLACK, GL_FILL);    
     
     r = 0.4;
     theta = (2 * pi) / n;

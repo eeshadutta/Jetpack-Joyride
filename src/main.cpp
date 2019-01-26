@@ -1,6 +1,5 @@
 #include "main.h"
 #include "timer.h"
-#include "ball.h"
 #include "player.h"
 #include "platform.h"
 #include "wall.h"
@@ -14,6 +13,7 @@
 #include "piggybank.h"
 #include "powerup.h"
 #include "score.h"
+#include "ring.h"
 
 using namespace std;
 
@@ -29,6 +29,8 @@ Platform ceiling;
 Wall wall[50];
 
 vector<Coin> coins;
+
+Ring ring;
 
 vector<Firelines> firelines;
 vector<Firebeams> firebeams;
@@ -48,6 +50,7 @@ float camera_rotation_angle = 0;
 float speed_horizontal, speed_vertical;
 float player_original_x, player_original_y;
 float dragon_x;
+float ring_x, ring_y;
 float boomerang_speed_x, boomerang_speed_y;
 float ceiling_pos = 11;
 int water_balloon, num_max_waterballoons;
@@ -57,7 +60,7 @@ glm::mat4 VP;
 
 int points = 0, coins_collected = 0;
 int num_wb = -1;
-time_t time_start, magnet_created, dragon_appear;
+time_t time_start, magnet_created, dragon_appear, shield_created;
 long long time_elapsed;
 
 Timer t60(1.0 / 60);
@@ -71,8 +74,8 @@ void draw()
     glm::mat4 MVP;
 
     // Scene render
-    for (int i = 0; i < 50; i++)
-        wall[i].draw(VP);
+    // for (int i = 0; i < 50; i++)
+    //     wall[i].draw(VP);
 
     int len = coins.size();
     for (int i = 0; i < len; i++)
@@ -80,6 +83,9 @@ void draw()
         if (coins[i].exist == true)
             coins[i].draw(VP);
     }
+
+    ring.draw(VP);
+
     len = firelines.size();
     for (int i = 0; i < len; i++)
     {
@@ -122,13 +128,13 @@ void draw()
     platform.draw(VP);
     ceiling.draw(VP);
 
-    player.draw(VP);
     len = smoke.size();
     for (int i = 0; i < len; i++)
     {
         if (smoke[i].exist)
             smoke[i].draw(VP);
     }
+    player.draw(VP);
 
     len = scores.size();
     for (int i = 0; i < len; i++)
@@ -218,7 +224,7 @@ void tick_input(GLFWwindow *window)
 
     if (right)
     {
-        if (player.position.x < dragon_x - 8)
+        if (player.position.x < dragon_x - 10)
             speed_horizontal = 0.4;
         player.tick(speed_horizontal, 0);
         speed_horizontal = 0;
@@ -236,7 +242,7 @@ void tick_input(GLFWwindow *window)
         }
     }
 
-    if (space)
+    if (space && !player.inside_ring)
     {
         speed_horizontal = 0;
         speed_vertical = 0.2;
@@ -256,7 +262,7 @@ void tick_input(GLFWwindow *window)
             color_out = COLOR_ORANGE;
         else
             color_out = COLOR_YELLOW;
-        WaterBalloon sb = WaterBalloon(player.position.x - 0.5, player.position.y - 0.2, 0.2, color_out, COLOR_BACKGROUND);
+        WaterBalloon sb = WaterBalloon(player.position.x - 0.5, player.position.y - 0.2, 0.2, color_out, COLOR_SKY);
         sb.speed_x = 0;
         sb.speed_y = -0.01;
         int num_sb = smoke.size();
@@ -309,7 +315,7 @@ void tick_input(GLFWwindow *window)
 
 void tick_elements()
 {
-    if (player.position.y > player_original_y && !glfwGetKey(window, GLFW_KEY_SPACE))
+    if (!player.inside_ring && player.position.y > player_original_y && !glfwGetKey(window, GLFW_KEY_SPACE))
     {
         speed_vertical -= 0.02;
         player.tick(speed_horizontal, speed_vertical);
@@ -328,7 +334,7 @@ void tick_elements()
         firebeams[i].tick();
         if (firebeams[i].position.y >= ceiling_pos)
             firebeams[i].direction = -1;
-        if (firebeams[i].position.y <= player_original_y + 3)
+        if (firebeams[i].position.y <= player_original_y + 4)
             firebeams[i].direction = 1;
     }
 
@@ -392,7 +398,11 @@ void tick_elements()
         if (num_ib == 0)
         {
             iceball.speed_x = -0.05;
-            iceball.speed_y = 0.01;
+            int type = rand() % 2;
+            if (type == 0)
+                iceball.speed_y = -0.01;
+            else
+                iceball.speed_y = 0.01;
             iceballs.push_back(iceball);
         }
         else
@@ -401,7 +411,11 @@ void tick_elements()
             if (sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) > 6.0)
             {
                 iceball.speed_x = -0.05;
-                iceball.speed_y = 0.01;
+                int type = rand() % 2;
+                if (type == 0)
+                    iceball.speed_y = -0.01;
+                else
+                    iceball.speed_y = 0.01;
                 iceballs.push_back(iceball);
             }
         }
@@ -419,9 +433,9 @@ void tick_elements()
         waterballoons[i].speed_y -= 0.01;
     }
 
-    if (magnet.exist)
+    if (!player.inside_ring && magnet.exist)
     {
-        if (player.position.x >= magnet.position.x - 7 && player.position.x <= magnet.position.x + 7 && player.position.y <= magnet.position.y + 5 && player.position.y >= magnet.position.y - 5)
+        if (player.position.x >= magnet.position.x - 7 && player.position.x <= magnet.position.x + 7 && player.position.y <= magnet.position.y + 7 && player.position.y >= magnet.position.y - 7)
         {
             if (player.position.x <= magnet.position.x)
                 player.magnet_influence_x += 0.05;
@@ -439,33 +453,54 @@ void tick_elements()
             player.magnet_influence_y = 0;
         }
     }
-    if (player.position.y <= player_original_y)
+
+    if (!player.inside_ring && player.position.y <= player_original_y)
     {
         player.magnet_influence_y = 0;
         player.position.y = player_original_y;
     }
 
-    if ((time(NULL) - time_start) % 20 == 0 && magnet.exist == false)
+    if ((time(NULL) - time_start) % 20 == 10 && magnet.exist == false)
     {
-        magnet_created = time(NULL);
-        magnet.exist = true;
-        int mag_x = 3 + rand() % 5;
-        int mag_y = rand() % 10;
-        magnet.position.x = player.position.x + (float)mag_x;
-        magnet.position.y = player_original_y + (float)mag_y;
+        if (player.position.x < dragon_x - 20)
+        {
+            magnet_created = time(NULL);
+            magnet.exist = true;
+            int mag_x = 5 + rand() % 5;
+            int mag_y = rand() % 10;
+            magnet.position.x = player.position.x + (float)mag_x;
+            if (magnet.position.x + 7 >= camera_pos.x)
+            {
+                magnet.position.x -= 8;
+            }
+            magnet.position.y = player_original_y + (float)mag_y;
+        }
     }
-    if ((time(NULL) - magnet_created) == 10)
+    if ((time(NULL) - magnet_created) == 8)
     {
         magnet.exist = false;
         player.magnet_influence_x = 0;
         player.magnet_influence_y = 0;
     }
 
-    if ((time(NULL) - time_start) % 50 == 0 && boomerang.exist == false)
+    if ((time(NULL) - time_start) % 40 == 0 && boomerang.exist == false)
     {
         boomerang.exist = true;
-        boomerang.position.x = player.position.x + 20;
+        boomerang.rotation = 0;
+        boomerang.position.x = player.position.x + 30;
         boomerang.position.y = player_original_y + 10;
+        boomerang.direction = -1;
+    }
+
+    if ((time(NULL) - time_start) % 20 == 10 && player.shield == false)
+    {
+        player.shield = true;
+        shield_created = time(NULL);
+    }
+
+    if ((time(NULL) - shield_created) == 10)
+    {
+        player.shield = false;
     }
 
     if (piggybank.exist)
@@ -496,6 +531,16 @@ void tick_elements()
             smoke[i].exist = false;
     }
 
+    if (player.position.x >= ring.position.x - 7 && player.position.x <= ring.position.x + 7 && player.position.y >= ring.position.y && player.position.y <= ring.position.y + 7)
+    {
+        player.inside_ring = true;
+        player.position.y = ring.position.y + sqrt(abs((player.position.x - ring.position.x) * (player.position.x - ring.position.x) - ring.radius * ring.radius));
+        player.box.x = player.position.x;
+        player.box.y = player.position.y;
+    }
+    else
+        player.inside_ring = false;
+
     int buf = points;
     int h = buf / 100;
     buf %= 100;
@@ -518,7 +563,7 @@ void initGL(GLFWwindow *window, int width, int height)
 {
     // Create the models
     player = Player(player_original_x, player_original_y);
-    platform = Platform(-30, -28, COLOR_BLACK);
+    platform = Platform(-30, -28, COLOR_GROUND);
     ceiling = Platform(-30, 13, COLOR_LIGHT_GREY);
 
     int wall_x = -15;
@@ -529,10 +574,12 @@ void initGL(GLFWwindow *window, int width, int height)
     }
 
     float prev_c_x = 0;
-    for (int i = 0; i < 30; i++)
+    while (true)
     {
         float c_y = rand() % 12;
         float c_x = prev_c_x + rand() % 10;
+        if (c_x >= dragon_x)
+            break;
         int num_coins = 2 + rand() % 5;
         for (int j = 0; j < num_coins; j++)
         {
@@ -541,33 +588,42 @@ void initGL(GLFWwindow *window, int width, int height)
             coins.push_back(coin);
             c_x += 1.0;
         }
-        prev_c_x = c_x + 2 * num_coins;
+        prev_c_x = c_x + num_coins;
     }
 
+    ring = Ring(ring_x, ring_y);
+
     float prev_fl_x = 0;
-    for (int i = 0; i < 20; i++)
+    while (true)
     {
         int f_x = rand() % 20;
         int f_y = rand() % 5;
         int f_l = rand() % 3;
-        int f_r = rand() % 180;
+        int f_r = rand() % 90;
         float fl_x = prev_fl_x + 10 + (float)f_x;
         float fl_y = player_original_y + 5 + (float)f_y;
         float fl_len = 4 + (float)f_l;
-        float fl_rot = -90 + (float)f_r;
+        float fl_rot = -45 + (float)f_r;
+        if (fl_x >= dragon_x - 3)
+            break;
+        if (fl_rot == 0)
+            fl_rot = 10;
         Firelines fl = Firelines(fl_x, fl_y, fl_len, fl_rot);
-        firelines.push_back(fl);
+        if (!(fl_x >= (ring_x - ring.radius - 4) && fl_x <= (ring_x + ring.radius + 4) && fl_y >= (ring_y - 4) && fl_y <= (ring_y + ring.radius + 4)))
+            firelines.push_back(fl);
         prev_fl_x = fl_x + fl_len;
     }
 
     float prev_fb_x = 10;
-    for (int i = 0; i < 10; i++)
+    while (true)
     {
         int f_y = rand() % 5;
         int f_x = rand() % 20;
         float fb_x = prev_fb_x + 10 + (float)f_x;
         float fb_y = 5 + (float)f_y;
         float fb_len = 10;
+        if (fb_x >= dragon_x - 5)
+            break;
         Firebeams fb = Firebeams(fb_x, fb_y, fb_len);
         firebeams.push_back(fb);
         prev_fb_x = fb_x + 5 * fb_len;
@@ -653,7 +709,7 @@ void initGL(GLFWwindow *window, int width, int height)
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
     reshapeWindow(window, width, height);
-    glClearColor(COLOR_BACKGROUND.r / 256.0, COLOR_BACKGROUND.g / 256.0, COLOR_BACKGROUND.b / 256.0, 0.0f); // R, G, B, A
+    glClearColor(COLOR_SKY.r / 256.0, COLOR_SKY.g / 256.0, COLOR_SKY.b / 256.0, 0.0f); // R, G, B, A
     glClearDepth(1.0f);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -672,8 +728,9 @@ int main(int argc, char **argv)
     player_original_x = -12;
     player_original_y = -6;
     boomerang_speed_x = -0.2;
-    num_max_waterballoons = 30;
-    dragon_x = 150;
+    num_max_waterballoons = 10;
+    dragon_x = 200;
+    ring_x = 20, ring_y = 0;
 
     window = initGLFW(width, height);
     initGL(window, width, height);
@@ -701,6 +758,63 @@ int main(int argc, char **argv)
                 }
             }
 
+            if (player.inside_ring == false && player.shield == false)
+            {
+                len = firelines.size();
+                for (int i = 0; i < len; i++)
+                {
+                    float x1, y1, x2, y2;
+                    x1 = firelines[i].position.x + (firelines[i].length / 2) * cos(firelines[i].rotation * M_PI / 180.0f);
+                    y1 = firelines[i].position.y + (firelines[i].length / 2) * sin(firelines[i].rotation * M_PI / 180.0f);
+                    x2 = firelines[i].position.x - (firelines[i].length / 2) * cos(firelines[i].rotation * M_PI / 180.0f);
+                    y2 = firelines[i].position.y - (firelines[i].length / 2) * sin(firelines[i].rotation * M_PI / 180.0f);
+
+                    if (!player.inside_ring && firelines[i].exist && detect_collision_line(x1, y1, x2, y2, player.box))
+                    {
+                        points -= 5;
+                        player.position.y = player_original_y;
+                        player.box.y = player.position.y;
+                    }
+
+                    int l = waterballoons.size();
+                    for (int j = 0; j < l; j++)
+                    {
+                        if (waterballoons[j].exist && firelines[i].exist && detect_collision_line(x1, y1, x2, y2, waterballoons[j].box))
+                        {
+                            firelines[i].exist = false;
+                            waterballoons[j].exist = false;
+                        }
+                    }
+                }
+
+                len = firebeams.size();
+                for (int i = 0; i < len; i++)
+                {
+                    if (detect_collision(player.box, firebeams[i].box))
+                    {
+                        points -= 10;
+                        player.position.y = player_original_y;
+                        player.box.y = player.position.y;
+                    }
+                }
+
+                if (boomerang.exist && detect_collision(player.box, boomerang.box))
+                {
+                    boomerang.exist = false;
+                    points -= 20;
+                }
+
+                len = iceballs.size();
+                for (int i = 0; i < len; i++)
+                {
+                    if (iceballs[i].exist && detect_collision(player.box, iceballs[i].box))
+                    {
+                        iceballs[i].exist = false;
+                        points -= 5;
+                    }
+                }
+            }
+
             len = firelines.size();
             for (int i = 0; i < len; i++)
             {
@@ -709,13 +823,6 @@ int main(int argc, char **argv)
                 y1 = firelines[i].position.y + (firelines[i].length / 2) * sin(firelines[i].rotation * M_PI / 180.0f);
                 x2 = firelines[i].position.x - (firelines[i].length / 2) * cos(firelines[i].rotation * M_PI / 180.0f);
                 y2 = firelines[i].position.y - (firelines[i].length / 2) * sin(firelines[i].rotation * M_PI / 180.0f);
-
-                if (firelines[i].exist && detect_collision_line(x1, y1, x2, y2, player.box))
-                {
-                    points -= 5;
-                    player.position.y = player_original_y;
-                    player.box.y = player.position.y;
-                }
 
                 int l = waterballoons.size();
                 for (int j = 0; j < l; j++)
@@ -726,33 +833,6 @@ int main(int argc, char **argv)
                         waterballoons[j].exist = false;
                     }
                 }
-            }
-
-            len = firebeams.size();
-            for (int i = 0; i < len; i++)
-            {
-                if (detect_collision(player.box, firebeams[i].box))
-                {
-                    points -= 10;
-                    player.position.y = player_original_y;
-                    player.box.y = player.position.y;
-                }
-            }
-
-            len = iceballs.size();
-            for (int i = 0; i < len; i++)
-            {
-                if (iceballs[i].exist && detect_collision(player.box, iceballs[i].box))
-                {
-                    iceballs[i].exist = false;
-                    points -= 5;
-                }
-            }
-
-            if (boomerang.exist && detect_collision(player.box, boomerang.box))
-            {
-                boomerang.exist = false;
-                points -= 20;
             }
 
             if (piggybank.exist && detect_collision(player.box, piggybank.box))

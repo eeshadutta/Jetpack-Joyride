@@ -63,7 +63,7 @@ Firelines::Firelines(float x, float y, float length, float rotation)
     box.width = length + 2 * r;
     box.height = r;
 
-    this->object1 = create3DObject(GL_TRIANGLES, 6 * n, vertex_buffer_data, COLOR_YELLOW, GL_FILL);
+    this->object1 = create3DObject(GL_TRIANGLES, 6 * n, vertex_buffer_data, COLOR_DARK_GREY, GL_FILL);
     this->object2 = create3DObject(GL_TRIANGLES, 3 * 2, vertex_buffer_data + 18 * n, COLOR_ORANGE, GL_FILL);
 }
 

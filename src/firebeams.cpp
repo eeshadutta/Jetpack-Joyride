@@ -80,7 +80,7 @@ Firebeams::Firebeams(float x, float y, float length)
     vertex_buffer_data[9 * n + 33] = length / 2;
     vertex_buffer_data[9 * n + 34] = -0.6;
     vertex_buffer_data[9 * n + 35] = 0.0f;
-    this->object1 = create3DObject(GL_TRIANGLES, 3 * n, vertex_buffer_data, COLOR_MAROON, GL_FILL);
+    this->object1 = create3DObject(GL_TRIANGLES, 3 * n, vertex_buffer_data, COLOR_DARK_GREY, GL_FILL);
     this->object2 = create3DObject(GL_TRIANGLES, 3 * 4, vertex_buffer_data + 9 * n, COLOR_ORANGE, GL_FILL);
 }
 

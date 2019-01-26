@@ -8,6 +8,8 @@ Player::Player(float x, float y)
     this->rotation = 0;
     this->magnet_influence_x = 0;
     this->magnet_influence_y = 0;
+    this->inside_ring = false;
+    this->shield = false;
 
     box.x = x;
     box.y = y;
@@ -133,7 +135,26 @@ Player::Player(float x, float y)
         vertex8[i + 8] = 0.0;
         theta += (2 * pi) / n;
     }
-    this->object8 = create3DObject(GL_TRIANGLES, 3 * n / 2 + 3 * n / 4, vertex8, COLOR_BACKGROUND, GL_FILL);
+    this->object8 = create3DObject(GL_TRIANGLES, 3 * n / 2 + 3 * n / 4, vertex8, COLOR_SKY, GL_FILL);
+
+    n = 100;
+    r = 1.2;
+    float vertex9[9 * n / 2];
+    theta = -pi / 2;
+    for (int i = 0; i < 9 * n / 2; i += 9)
+    {
+        vertex9[i] = 1.8 + r * cos(theta);
+        vertex9[i + 1] = 0.4 + r * sin(theta);
+        vertex9[i + 2] = 0.0;
+        vertex9[i + 3] = 1.8 + r * cos(theta + (2 * pi) / n);
+        vertex9[i + 4] = 0.4 + r * sin(theta + (2 * pi) / n);
+        vertex9[i + 5] = 0.0;
+        vertex9[i + 6] = 1.8;
+        vertex9[i + 7] = 0.4;
+        vertex9[i + 8] = 0.0;
+        theta += (2 * pi) / n;
+    }
+    this->object9 = create3DObject(GL_TRIANGLES, 3 * n / 2, vertex9, COLOR_GREY, GL_FILL);
 
 }
 
@@ -153,6 +174,8 @@ void Player::draw(glm::mat4 VP)
     draw3DObject(this->object3);
     draw3DObject(this->object4);
     draw3DObject(this->object6);
+    if (this->shield)
+        draw3DObject(this->object9);
 }
 
 void Player::set_position(float x, float y)
